@@ -54,18 +54,12 @@ safetensors_manager/
 ## Merging Safetensors Files
 
 To merge all `.safetensors` files in a directory:
-
-```bash
-python scripts/merge_files.py /path/to/directory
-```
+- Modify the directory in `scripts/merge_files.py` to your directory.
 
 ## Splitting a Safetensor File
 
 To split a .safetensors file into a specified number of chunks:
-
-```bash
-python scripts/split_file.py /path/to/file.safetensors <number_of_chunks>
-```
+- Modify the safetensor file and the number of shards/chunks in `scripts/split_file.py`
 
 # License
 
