@@ -4,7 +4,7 @@
 
 ## Overview
 
-Safetensors Manager is a Python package designed to handle the merging and splitting of `.safetensors` files. It allows you to combine multiple `.safetensors` files into one or split a large `.safetensors` file into smaller chunks/shards for easier management.
+Safetensors Manager is a Python package designed to handle the merging and splitting of `.safetensors` files. It allows you to combine multiple `.safetensors` files into one or split a large `.safetensors` file into smaller chunks/shards for easier management while also generating the `model.safetensors.index.json` and `chunk_paths.json` files ( HuggingFace standards ).
 
 
 ## Project Structure
