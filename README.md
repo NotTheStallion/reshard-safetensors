@@ -19,10 +19,6 @@ safetensors_manager/
 ├── scripts/
 │   ├── merge_files.py
 │   ├── split_file.py
-├── tests/
-│   ├── test_file_utils.py
-│   ├── test_merger.py
-│   ├── test_splitter.py
 ├── README.md
 ├── requirements.txt
 ```
