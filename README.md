@@ -29,14 +29,15 @@ safetensors_manager/
 1. Clone the repository:
 
     ```bash
-    git clone <repository-url>
-    cd scripts
+    git clone https://github.com/NotTheStallion/reshard-safetensors
+    cd reshard-safetensors/
     ```
 
 2. Install the required dependencies:
 
     ```bash
-    pip install -r requirements.txt
+    # use python, python3 or whatever applies to you
+    python -m pip install -r requirements.txt
     ```
 
 3. Setup:
@@ -50,12 +51,12 @@ safetensors_manager/
 ## Merging Safetensors Files
 
 To merge all `.safetensors` files in a directory:
-- Modify the directory in `scripts/merge_files.py` to your directory.
+- Modify the folder/location string in `scripts/merge_files.py` to match your chosen directory.
 
 ## Splitting a Safetensor File
 
 To split a .safetensors file into a specified number of chunks:
-- Modify the safetensor file and the number of shards/chunks in `scripts/split_file.py`
+- Modify the `scripts/split_file.py` script to match your desired safetensor file name and the desired number of shards/chunks to split into 
 
 # License
 
