@@ -32,69 +32,80 @@ def guess_layer_size(shape, dtype):
 
 
 
-def split_safetensor_file(filepath, num_chunks=1, verbose=False):
+def split_safetensor_file(input_file, output_dir, num_shards=2, verbose=False):
     """
     Split a `.safetensors` file into multiple chunks.
 
     Args:
-        filepath (str): The path to the `.safetensors` file to split.
+        input_file (str): The path to the `.safetensors` file to split.
+        output_dir (str): The directory to save the output chunks.
         num_chunks (int): Number of chunks to split the file into.
+        verbose (bool): Whether to print verbose output.
 
     Returns:
         None
     """
-    basename = os.path.basename(filepath)
-    dirname = os.path.dirname(filepath)
+    if num_shards < 2:
+        raise ValueError("num_chunks must be at least 2.")
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    basename = os.path.basename(input_file)
     extension = basename.split(".")[-1]
-    
-    filename_no_ext = basename.split(".")[-2] 
-    file_size = os.path.getsize(filepath)
-    chunk_size = file_size // num_chunks
-    if verbose : print(f"Size Logic : {file_size} = {num_chunks} x {chunk_size}\n\n")
+    filename_no_ext = ".".join(basename.split(".")[:-1])
+    file_size = os.path.getsize(input_file)
+    chunk_size = file_size // num_shards
+    if verbose:
+        print(f"Size Logic : {file_size} = {num_shards} x {chunk_size}\n\n")
 
     digit_count = 5
     chunk_paths = []
-    model_index = {"metadata":{"total_size":file_size}, "weight_map":{}}
+    model_index = {"metadata": {"total_size": file_size}, "weight_map": {}}
     chunk_tensors = {}
     cumul_size_sum = 0
     chunk_id = 1
 
-    with safe_open(filepath, framework="pt") as sf_tsr:
+    with safe_open(input_file, framework="pt") as sf_tsr:
         metadata = sf_tsr.metadata()
         for layer in sf_tsr.keys():
             blk_shape = sf_tsr.get_slice(str(layer)).get_shape()
             blk_type = sf_tsr.get_slice(str(layer)).get_dtype()
             blk_tensor = sf_tsr.get_tensor(str(layer))
-            
+
             cumul_size_sum += guess_layer_size(blk_shape, blk_type)
-            
+
             if cumul_size_sum > chunk_size - 8:
-                if verbose : print(f"\nGoal :", chunk_size,"reached",cumul_size_sum-guess_layer_size(blk_shape, blk_type))
-                
-                chunk_filename = f"{filename_no_ext}-{str(chunk_id).zfill(digit_count)}-of-{str(num_chunks).zfill(digit_count)}.{extension}"
-                split_path = os.path.join(dirname, chunk_filename)
+                if verbose:
+                    print(f"\nGoal :", chunk_size, "reached", cumul_size_sum - guess_layer_size(blk_shape, blk_type))
+
+                chunk_filename = f"{filename_no_ext}-{str(chunk_id).zfill(digit_count)}-of-{str(num_shards).zfill(digit_count)}.{extension}"
+                split_path = os.path.join(output_dir, chunk_filename)
                 save_file(chunk_tensors, split_path, metadata)
-                if verbose : print(f"save {split_path}\n\n")
-                
+                if verbose:
+                    print(f"save {split_path}\n\n")
+
                 chunk_paths.append(chunk_filename)
-                
+
                 chunk_id += 1
                 cumul_size_sum = 0
                 chunk_tensors = {}
-            
-            chunk_tensors[str(layer)] = blk_tensor
-            if verbose : print("|_|",end="")
-            model_index["weight_map"][layer] = f"{filename_no_ext}-{str(chunk_id).zfill(digit_count)}-of-{str(num_chunks).zfill(digit_count)}.{extension}"
 
-        if verbose : print(f"\nGoal :", chunk_size,"reached",cumul_size_sum-guess_layer_size(blk_shape, blk_type))
-        chunk_filename = f"{filename_no_ext}-{str(chunk_id).zfill(digit_count)}-of-{str(num_chunks).zfill(digit_count)}.{extension}"
-        split_path = os.path.join(dirname, chunk_filename)
+            chunk_tensors[str(layer)] = blk_tensor
+            if verbose:
+                print("|_|", end="")
+            model_index["weight_map"][layer] = f"{filename_no_ext}-{str(chunk_id).zfill(digit_count)}-of-{str(num_shards).zfill(digit_count)}.{extension}"
+
+        if verbose:
+            print(f"\nGoal :", chunk_size, "reached", cumul_size_sum - guess_layer_size(blk_shape, blk_type))
+        chunk_filename = f"{filename_no_ext}-{str(chunk_id).zfill(digit_count)}-of-{str(num_shards).zfill(digit_count)}.{extension}"
+        split_path = os.path.join(output_dir, chunk_filename)
         chunk_paths.append(chunk_filename)
         save_file(chunk_tensors, split_path, metadata)
-        if verbose : print(f"save {split_path}\n\n")
-    
-    with open("chunk_paths.json", 'w') as f:
+        if verbose:
+            print(f"save {split_path}\n\n")
+
+    with open(os.path.join(output_dir, "chunk_paths.json"), 'w') as f:
         json.dump(chunk_paths, f)
-    
-    with open("model.safetensors.index.json", 'w') as f:
+
+    with open(os.path.join(output_dir, "model.safetensors.index.json"), 'w') as f:
         json.dump(model_index, f)
